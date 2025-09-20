@@ -19,16 +19,24 @@ from collections import Counter
 import warnings
 warnings.filterwarnings('ignore')
 
-# Download NLTK data
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
+# Download NLTK data with error handling
+def download_nltk_data():
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        try:
+            nltk.download('punkt', quiet=True)
+            nltk.download('punkt_tab', quiet=True)
+        except:
+            st.warning("Could not download punkt_tab. Using alternative tokenization.")
+    
+    try:
+        nltk.data.find('corpora/stopwords')
+    except LookupError:
+        nltk.download('stopwords', quiet=True)
 
-try:
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords')
+# Download required NLTK resources
+download_nltk_data()
 
 # Load spaCy model
 try:
@@ -37,7 +45,7 @@ except OSError:
     st.error("spaCy English model not found. Please run: python -m spacy download en_core_web_sm")
     st.stop()
 
-# Function to analyze resume against job description - MOVED TO TOP
+# Function to analyze resume against job description
 def analyze_resume(resume_text, jd_text, resume_name):
     # Preprocess texts
     resume_processed = preprocess_text(resume_text)
@@ -87,9 +95,14 @@ def preprocess_text(text):
     text = re.sub(r'[^a-zA-Z\s]', '', text)
     
     # Tokenize and remove stopwords
-    stop_words = set(stopwords.words('english'))
-    words = word_tokenize(text)
-    words = [word for word in words if word not in stop_words and len(word) > 2]
+    try:
+        stop_words = set(stopwords.words('english'))
+        # Use simple regex-based tokenization as fallback
+        words = re.findall(r'\b[a-zA-Z]{3,}\b', text)
+        words = [word for word in words if word not in stop_words]
+    except:
+        # Fallback tokenization if NLTK fails
+        words = re.findall(r'\b[a-zA-Z]{3,}\b', text)
     
     return ' '.join(words)
 
