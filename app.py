@@ -355,7 +355,8 @@ elif app_mode == "Upload Documents":
                 st.session_state.results.append(result)
             
             st.success("Analysis completed!")
-            st.experimental_rerun()
+            # Use the current method to rerun the app
+            st.rerun()
 
 # Analysis Results page
 elif app_mode == "Analysis Results":
